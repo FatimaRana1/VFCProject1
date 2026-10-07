@@ -14,6 +14,13 @@ def calloutHours(df):
 def TotalCalloutTime(df):
     totalHours = 0
 
+    insertCol = True
+    for col in df.columns:
+        if col == "Total Callout Time":
+            insertCol = False
+    if insertCol == True:
+        df.insert(loc=4, column="Total Callout Time", value=0.0)
+
     for index, value in df["Callout Time"].items():
         if not pd.isnull(value):
             attended = df.loc[index, "Attended By"]
@@ -22,7 +29,11 @@ def TotalCalloutTime(df):
             else:
                 peoplePresent = 1
 
+            calloutHours = value * peoplePresent
+            df.loc[index, "Total Callout Time"] = calloutHours
+
             totalHours += value * peoplePresent
+
     return totalHours
 
 # Counts number of displaced animals by adding number of animals
@@ -64,7 +75,7 @@ def TotalDarted(df):
 # Total number of sedation drugs used
 def TotalSedated(df):
     numbSedated = 0
-    sedationDrugs = ["Pamlin", "Butorphanol", "Zol ACP 10. (5ml in a bottle)", "Zoletil alone (5 mls water in bottle).", "Xylazine Zoletil (3 mls in bottle Zoletil) - total 3.5 ml"]
+    sedationDrugs = ["Pamlin", "Butorphanol", "Zol ACP 10. (5ml in a bottle)", "Zoletil alone (5 mls water in bottle)."]
 
     for index, value in df["Drugs/Meds Used"].items():
         medColumn = df.loc[index, "Drugs/Meds Used"]
@@ -73,17 +84,20 @@ def TotalSedated(df):
             for sedatedMed in sedationDrugs:
                 if sedatedMed in medColumn:
                     numbSedated += 1
+            if "Sedated" in df.loc[index, "Outcome"] and ("Xylazine Zoletil (6.5 mls Xylazine in Zoletil)" in medColumn or "Xylazine Zoletil (6.5 mls Xylazine in Zoletil)" in medColumn or "Xylazine Zoletil (3 mls in bottle Zoletil) - total 3.5 ml" in medColumn):
+                numbSedated += 1
+            
     return numbSedated
 
 # Number of other drugs
 def TotalOtherDrugs(df):
     numbOther = 0
-    otherDrug = ["Subcut fluids", "Atipamezole reversal", "Eye drops", "Antibiotics", "IV fluids", "Multivitamins", "Se", "Worming", "Lethabarb", ]
+    otherDrugs = ["Subcut fluids", "Atipamezol reversal", "Eye drops", "Antibiotics", "IV fluids", "Multivitamins", "Se", "Worming", "Lethabarb", ]
 
     for index, value in df["Drugs/Meds Used"].items():
         medColumn = df.loc[index, "Drugs/Meds Used"]
 
-        if pd.notnull(value) and any(_otherDrug in medColumn for _otherDrug in otherDrug):
+        if pd.notnull(value) and any(_otherDrug in medColumn for _otherDrug in otherDrugs):
             numbOther += (1 * int(df.loc[index, "No of Animals"]))
     return numbOther
 
@@ -103,3 +117,11 @@ def TotalFuelCost(df, kms):
 # Total Volunteer Field hours
 def TotalVolHours(df, prm, kms):
     return TotalCalloutTime(df) + prm + kms/60
+
+# Count PRM
+def PRMCount(df):
+    count = 0
+    for index, value in df["Post Monitoring"].items():
+        if (df.loc[index, "Post Monitoring"].strip() == "Yes" or df.loc[index, "Post Monitoring"].strip() == "yes") and (df.loc[index, "Post Monitoring Address"] != None or df.loc[index, "Closest Too Reserve"] != None):
+            count += 1
+    return count

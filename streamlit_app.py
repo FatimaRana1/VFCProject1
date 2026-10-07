@@ -10,16 +10,12 @@ st.title("VFC Notion Count Automation")
 st.write("Please enter the kms:")
 kms = st.number_input("Kms:")
 
-st.write("Please enter the PRM hours:")
-prm = st.number_input("PRM hours:")
-
 st.write("Please upload the file below")
 file = st.file_uploader("Upload CSV", type="csv")
 
 if file is not None:
     df = blank.InitialiseData(file)
 
-    
     # Data cleaning operations
     missingJobCodes = blank.BlankJobCode(df)
     if len(missingJobCodes) > 0:
@@ -36,9 +32,6 @@ if file is not None:
         st.write(emptydarts)
 
 
-
-
-
     # Run Calculations
     jobCode = computation.count_jobCode(df)
     calloutHours = computation.calloutHours(df)
@@ -51,11 +44,14 @@ if file is not None:
     drugCost = computation.TotalDrugCost(df)
     fuelCost = computation.FuelCost(kms)
     totalFuelCost = computation.TotalFuelCost(df, kms)
+    prm = computation.PRMCount(df)
     totalVolHours = computation.TotalVolHours(df, prm, kms)
+
+    st.write(f"PRM Hours: {prm}")
 
     # Append back out
     new_rows = pd.DataFrame([
-    {"Job Code" : jobCode, "Callout Time": calloutHours, "Issue": f"Displaced: {displacedTotal}", "No of Animals": totalAnimals, "Outcome": f"Darted: {totalDarted[0]}", "Entered By": f"Sedated: {totalSedated}", "Darter/s": f"Other: {otherMeds}"},
+    {"Job Code" : jobCode, "Callout Time": calloutHours, "Total Callout Time": totalCalloutHours, "Issue": f"Displaced: {displacedTotal}", "No of Animals": totalAnimals, "Outcome": f"Darted: {totalDarted[0]}", "Entered By": f"Sedated: {totalSedated}", "Darter/s": f"Other: {otherMeds}"},
     {},
     {"Issue": f"${drugCost:.2f}", "Animal Type": "drug costs"},
     {"Issue": kms, "Animal Type": "km"},
